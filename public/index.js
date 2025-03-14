@@ -133,49 +133,63 @@ document.addEventListener('DOMContentLoaded', () => {
       categoriesSection.className = 'categories-section';
       categoriesSection.innerHTML = '<h3>Security Checks</h3>';
       
-      // Create security grid
-      const securityGrid = document.createElement('div');
-      securityGrid.className = 'security-grid';
+      // Create a simple list for security checks
+      const securityList = document.createElement('div');
+      securityList.className = 'security-list';
       
       // Add security check items
       results.categories.forEach(category => {
+        // Create item for each security check
         const checkItem = document.createElement('div');
-        checkItem.className = `security-check-item ${category.passed ? 'passed' : 'failed'}`;
+        checkItem.className = 'security-check-item';
         
-        // Create check header
-        const checkHeader = document.createElement('div');
-        checkHeader.className = 'check-header';
-        checkHeader.innerHTML = `
-          <div class="check-icon ${category.passed ? 'passed' : 'failed'}">
-            ${category.passed ? '✓' : '✗'}
-          </div>
-          <div class="check-name">${category.name}</div>
-          <div class="severity-badge severity-${category.severity.toLowerCase()}">${category.severity}</div>
-        `;
+        // Create item header
+        const itemHeader = document.createElement('div');
+        itemHeader.className = 'check-item-header';
         
-        // Create check details
-        const checkDetails = document.createElement('div');
-        checkDetails.className = 'check-details';
-        checkDetails.innerHTML = `
+        // Create status indicator
+        const statusIndicator = document.createElement('span');
+        statusIndicator.className = `check-status ${category.passed ? 'passed' : 'failed'}`;
+        statusIndicator.innerHTML = category.passed ? '✓' : '✗';
+        
+        // Create name element
+        const nameElement = document.createElement('span');
+        nameElement.className = 'check-name';
+        nameElement.textContent = category.name;
+        
+        // Create severity element
+        const severityElement = document.createElement('span');
+        severityElement.className = `severity-indicator severity-${category.severity.toLowerCase()}`;
+        severityElement.textContent = category.severity;
+        
+        // Add elements to header
+        itemHeader.appendChild(statusIndicator);
+        itemHeader.appendChild(nameElement);
+        itemHeader.appendChild(severityElement);
+        
+        // Create details container (initially hidden)
+        const detailsContainer = document.createElement('div');
+        detailsContainer.className = 'check-details hidden';
+        detailsContainer.innerHTML = `
           <div class="description">${category.description}</div>
           <div class="recommendation">${category.recommendation}</div>
         `;
         
-        // Add elements to check item
-        checkItem.appendChild(checkHeader);
-        checkItem.appendChild(checkDetails);
+        // Add header and details to item
+        checkItem.appendChild(itemHeader);
+        checkItem.appendChild(detailsContainer);
         
         // Add click event to toggle details
-        checkItem.addEventListener('click', () => {
-          checkItem.classList.toggle('expanded');
+        itemHeader.addEventListener('click', () => {
+          detailsContainer.classList.toggle('hidden');
         });
         
-        // Add check item to grid
-        securityGrid.appendChild(checkItem);
+        // Add item to list
+        securityList.appendChild(checkItem);
       });
       
-      // Add grid to categories section
-      categoriesSection.appendChild(securityGrid);
+      // Add list to categories section
+      categoriesSection.appendChild(securityList);
       
       // Create result card
       const resultCard = document.createElement('div');

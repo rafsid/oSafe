@@ -400,123 +400,74 @@ body {
   text-transform: uppercase;
 }
 
-.security-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+/* Security List Styles */
+.security-list {
+  display: block;
+  width: 100%;
+  margin-bottom: 2rem;
 }
 
 .security-check-item {
-  background: rgba(0, 0, 0, 0.8);
-  border: none;
-  border-radius: 10px;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  position: relative;
-  box-shadow: 
-    6px 6px 10px rgba(100, 100, 100, 0.3),
-    -6px -6px 10px rgba(100, 100, 100, 0.1);
+  margin-bottom: 1px;
+  background: transparent;
 }
 
-.security-check-item:hover {
-  transform: translateY(-3px);
-  box-shadow: 
-    8px 8px 15px rgba(100, 100, 100, 0.3),
-    -8px -8px 15px rgba(100, 100, 100, 0.1);
-}
-
-.security-check-item.expanded {
-  grid-column: 1 / -1;
-}
-
-.check-header {
+.check-item-header {
   display: flex;
   align-items: center;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.8);
+  cursor: pointer;
   border-bottom: 1px solid rgba(255, 215, 0, 0.1);
 }
 
-.check-icon {
+.check-item-header:hover {
+  background-color: rgba(255, 215, 0, 0.05);
+}
+
+.check-status {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  margin-right: 0.75rem;
+  margin-right: 1rem;
   font-weight: bold;
-  border: none;
+  background-color: var(--yellow);
+  color: var(--black);
   box-shadow: 
     2px 2px 4px rgba(100, 100, 100, 0.3),
     -2px -2px 4px rgba(100, 100, 100, 0.1);
-}
-
-.check-icon.passed {
-  background-color: var(--yellow);
-  color: var(--black);
-}
-
-.check-icon.failed {
-  background-color: var(--yellow);
-  color: var(--black);
-  border-color: var(--black);
 }
 
 .check-name {
   flex: 1;
   font-weight: 500;
-  text-transform: uppercase;
   color: var(--yellow);
 }
 
-.severity-badge {
+.severity-indicator {
   padding: 0.25rem 0.5rem;
   border-radius: 5px;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  border: none;
+  background-color: var(--yellow);
+  color: var(--black);
+  margin-left: 1rem;
   box-shadow: 
     2px 2px 4px rgba(100, 100, 100, 0.3),
     -2px -2px 4px rgba(100, 100, 100, 0.1);
 }
 
-.severity-low {
-  background-color: var(--yellow);
-  color: var(--black);
-  border-color: var(--black);
-}
-
-.severity-medium {
-  background-color: var(--yellow);
-  color: var(--black);
-  border-color: var(--black);
-}
-
-.severity-high {
-  background-color: var(--yellow);
-  color: var(--black);
-  border-color: var(--black);
-}
-
-.severity-critical {
-  background-color: var(--yellow);
-  color: var(--black);
-  border-color: var(--black);
-}
-
 .check-details {
   padding: 1rem;
-  background: var(--black);
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 215, 0, 0.1);
 }
 
-.security-check-item.expanded .check-details {
-  max-height: 500px;
+.check-details.hidden {
+  display: none;
 }
 
 .description {
@@ -536,12 +487,17 @@ body {
   color: var(--yellow);
 }
 
-.security-check-item.passed {
-  border-left: 4px solid var(--yellow);
-}
-
-.security-check-item.failed {
-  border-left: 4px solid var(--yellow);
+/* Remove all table and grid styles */
+.table-container,
+.security-table,
+.security-grid,
+.security-check-row,
+.details-row,
+.status-cell,
+.name-cell,
+.severity-cell,
+.details-cell {
+  display: none !important;
 }
 
 /* Glass card component */

@@ -250,7 +250,23 @@ app.post('/api/analyze-security', async (req, res) => {
       res.json({ analysis: analysisJson });
     } catch (error) {
       console.error("Error with text-based schema approach:", error);
-      res.status(500).json({ error: "Failed to analyze security. Please try again later." });
+      if (error.status === 503) {
+        // Fallback to a simpler analysis or pre-cached results
+        const simplifiedAnalysis = {
+          summary: "Basic security analysis (AI service unavailable)",
+          categories: securityCategories.map(category => ({
+            name: category,
+            passed: null, // Unknown
+            description: "This check could not be performed because the AI service is currently unavailable.",
+            severity: "unknown",
+            recommendation: "Try again later when the service is less busy."
+          }))
+        };
+        res.json({ analysis: simplifiedAnalysis });
+      } else {
+        // Handle other errors as before
+        res.status(500).json({ error: "Failed to analyze security. Please try again later." });
+      }
     }
     
   } catch (error) {
