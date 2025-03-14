@@ -1,136 +1,234 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('repo-form');
-  const urlInput = document.getElementById('repo-url');
-  const analyzeBtn = document.getElementById('analyze-btn');
-  const resultContainer = document.getElementById('result-container');
-  const progressBar = document.getElementById('progress-bar');
-  const progressText = document.getElementById('progress-text');
-  const transformedUrlDisplay = document.getElementById('transformed-url');
-  const steps = document.querySelectorAll('.step');
-  
-  form.addEventListener('submit', async (e) => {
+  // DOM Elements
+  const repoForm = document.getElementById('repoForm');
+  const repoUrlInput = document.getElementById('repoUrl');
+  // Remove transformed URL element references
+  // const transformedUrlContainer = document.getElementById('transformedUrlContainer');
+  // const transformedUrlElement = document.getElementById('transformedUrl');
+  const processSection = document.getElementById('processSection');
+  const progressBar = document.getElementById('progressBar');
+  const progressText = document.getElementById('progressText');
+  const resultsSection = document.getElementById('resultsSection');
+  const resultContainer = document.getElementById('resultContainer');
+  const step1 = document.getElementById('step1');
+  const step2 = document.getElementById('step2');
+  const step3 = document.getElementById('step3');
+  const step4 = document.getElementById('step4');
+
+  // Event Listeners
+  repoForm.addEventListener('submit', handleFormSubmit);
+
+  // Form submission handler
+  async function handleFormSubmit(e) {
     e.preventDefault();
     
-    // Reset UI state
-    resultContainer.innerHTML = '';
-    progressBar.style.width = '0%';
-    progressText.textContent = 'Starting...';
-    steps.forEach(step => step.classList.remove('active'));
-    steps[0].classList.add('active');
+    // Reset UI
+    resetUI();
     
-    // Validate GitHub URL
-    const githubUrl = urlInput.value.trim();
-    if (!isValidGithubUrl(githubUrl)) {
-      showError('Please enter a valid GitHub repository URL');
+    // Get and validate repository URL
+    const repoUrl = repoUrlInput.value.trim();
+    if (!isValidGithubUrl(repoUrl)) {
+      showError('Please enter a valid GitHub repository URL (e.g., https://github.com/username/repo)');
       return;
     }
     
-    // Disable button and show loading state
-    analyzeBtn.disabled = true;
-    analyzeBtn.innerHTML = '<span class="spinner"></span> Analyzing...';
+    // Show process section
+    processSection.classList.remove('hidden');
+    
+    // Step 1: Fetching
+    updateProgress(25, 'Fetching repository content...', 1);
     
     try {
-      // Step 1: Transform URL
-      progressBar.style.width = '10%';
-      progressText.textContent = 'Transforming URL...';
+      // Transform GitHub URL to raw content URL
+      const transformedUrl = transformGithubUrl(repoUrl);
       
-      // Update step indicators
-      steps[0].classList.remove('active');
-      steps[1].classList.add('active');
+      // Remove displaying the transformed URL to the user
+      // transformedUrlElement.textContent = transformedUrl;
+      // transformedUrlContainer.classList.remove('hidden');
       
-      const transformedUrl = githubUrl.replace('github.com', 'uithub.com');
-      transformedUrlDisplay.textContent = transformedUrl;
-      transformedUrlDisplay.parentElement.classList.remove('hidden');
+      // Step 2: Processing
+      updateProgress(50, 'Processing repository content...', 2);
       
-      // Short delay to show the transformation step
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Step 2: Fetch content from uithub.com
-      progressBar.style.width = '30%';
-      progressText.textContent = 'Fetching repository content...';
-      
-      // Update step indicators
-      steps[1].classList.remove('active');
-      steps[2].classList.add('active');
-      
+      // Fetch repository content
       const response = await fetch('/api/fetch-content', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url: transformedUrl })
+        body: JSON.stringify({ url: transformedUrl }),
       });
       
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to fetch repository content');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch repository content');
       }
       
-      // Step 3: Process and analyze content
-      progressBar.style.width = '60%';
-      progressText.textContent = 'Analyzing repository...';
+      const repoData = await response.json();
       
-      // Update step indicators
-      steps[2].classList.remove('active');
-      steps[3].classList.add('active');
+      // Step 3: Analyzing
+      updateProgress(75, 'Analyzing security vulnerabilities...', 3);
       
-      const data = await response.json();
-      
-      // Step 4: Send to Groq API
-      progressBar.style.width = '80%';
-      progressText.textContent = 'Generating security report...';
-      
-      const analysisResponse = await fetch('/api/analyze-security', {
+      // Perform security analysis
+      const securityResponse = await fetch('/api/analyze-security', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: data.content })
+        body: JSON.stringify({ content: repoData.content }),
       });
       
-      if (!analysisResponse.ok) {
-        const error = await analysisResponse.json();
-        throw new Error(error.message || 'Failed to analyze repository');
+      if (!securityResponse.ok) {
+        const errorData = await securityResponse.json();
+        throw new Error(errorData.error || 'Failed to analyze security vulnerabilities');
       }
       
-      // Display results
-      progressBar.style.width = '100%';
-      progressText.textContent = 'Complete!';
+      const securityResults = await securityResponse.json();
       
-      const analysisData = await analysisResponse.json();
-      displayResults(analysisData.analysis);
+      // Step 4: Complete
+      updateProgress(100, 'Analysis complete!', 4);
+      
+      // Display results
+      displayResults(securityResults.analysis);
       
     } catch (error) {
-      showError(error.message);
-    } finally {
-      // Reset button state
-      analyzeBtn.disabled = false;
-      analyzeBtn.textContent = 'Analyze Repository';
+      console.error('Error:', error);
+      showError(error.message || 'An unexpected error occurred');
     }
-  });
-  
-  function isValidGithubUrl(url) {
-    // Basic GitHub URL validation
-    const pattern = /^https:\/\/github\.com\/[a-zA-Z0-9-_.]+\/[a-zA-Z0-9-_.]+\/?$/i;
-    return pattern.test(url);
   }
-  
+
+  // Update progress bar and text
+  function updateProgress(percentage, message, stepNumber) {
+    progressBar.style.width = `${percentage}%`;
+    progressText.textContent = message;
+    
+    // Update step indicators
+    const steps = [step1, step2, step3, step4];
+    steps.forEach((step, index) => {
+      if (index < stepNumber) {
+        step.classList.add('active');
+      } else {
+        step.classList.remove('active');
+      }
+    });
+  }
+
+  // Display security analysis results
+  function displayResults(results) {
+    resultsSection.classList.remove('hidden');
+    
+    try {
+      // Create summary section
+      const summarySection = document.createElement('div');
+      summarySection.className = 'summary-section';
+      summarySection.innerHTML = `
+        <h3>Security Analysis Summary</h3>
+        <p>${results.summary}</p>
+      `;
+      
+      // Create categories section
+      const categoriesSection = document.createElement('div');
+      categoriesSection.className = 'categories-section';
+      categoriesSection.innerHTML = '<h3>Security Checks</h3>';
+      
+      // Create security grid
+      const securityGrid = document.createElement('div');
+      securityGrid.className = 'security-grid';
+      
+      // Add security check items
+      results.categories.forEach(category => {
+        const checkItem = document.createElement('div');
+        checkItem.className = `security-check-item ${category.passed ? 'passed' : 'failed'}`;
+        
+        // Create check header
+        const checkHeader = document.createElement('div');
+        checkHeader.className = 'check-header';
+        checkHeader.innerHTML = `
+          <div class="check-icon ${category.passed ? 'passed' : 'failed'}">
+            ${category.passed ? '✓' : '✗'}
+          </div>
+          <div class="check-name">${category.name}</div>
+          <div class="severity-badge severity-${category.severity.toLowerCase()}">${category.severity}</div>
+        `;
+        
+        // Create check details
+        const checkDetails = document.createElement('div');
+        checkDetails.className = 'check-details';
+        checkDetails.innerHTML = `
+          <div class="description">${category.description}</div>
+          <div class="recommendation">${category.recommendation || category.recommendations}</div>
+        `;
+        
+        // Add elements to check item
+        checkItem.appendChild(checkHeader);
+        checkItem.appendChild(checkDetails);
+        
+        // Add click event to toggle details
+        checkItem.addEventListener('click', () => {
+          checkItem.classList.toggle('expanded');
+        });
+        
+        // Add check item to grid
+        securityGrid.appendChild(checkItem);
+      });
+      
+      // Add grid to categories section
+      categoriesSection.appendChild(securityGrid);
+      
+      // Create result card
+      const resultCard = document.createElement('div');
+      resultCard.className = 'result-card';
+      resultCard.appendChild(summarySection);
+      resultCard.appendChild(categoriesSection);
+      
+      // Add result card to container
+      resultContainer.innerHTML = '';
+      resultContainer.appendChild(resultCard);
+      
+    } catch (error) {
+      console.error('Error displaying results:', error);
+      showError('Failed to display results. Please try again.');
+    }
+  }
+
+  // Show error message
   function showError(message) {
+    resultsSection.classList.remove('hidden');
     resultContainer.innerHTML = `
       <div class="error-card">
-        <div class="error-icon">❌</div>
+        <div class="error-icon">⚠️</div>
         <div class="error-message">${message}</div>
       </div>
     `;
   }
-  
-  function displayResults(analysis) {
-    // Format and display the security analysis results
-    resultContainer.innerHTML = `
-      <div class="result-card">
-        <h2>Security Analysis Results</h2>
-        <div class="markdown-content">${marked.parse(analysis)}</div>
-      </div>
-    `;
+
+  // Reset UI elements
+  function resetUI() {
+    // Remove reference to transformedUrlContainer since we're not using it
+    // transformedUrlContainer.classList.add('hidden');
+    processSection.classList.add('hidden');
+    resultsSection.classList.add('hidden');
+    progressBar.style.width = '0';
+    progressText.textContent = 'Initializing...';
+    resultContainer.innerHTML = '';
+    
+    // Reset step indicators
+    const steps = [step1, step2, step3, step4];
+    steps.forEach(step => step.classList.remove('active'));
+  }
+
+  // Validate GitHub URL
+  function isValidGithubUrl(url) {
+    const githubRegex = /^https:\/\/github\.com\/[a-zA-Z0-9-_.]+\/[a-zA-Z0-9-_.]+\/?$/;
+    return githubRegex.test(url);
+  }
+
+  // Transform GitHub URL to raw content URL
+  function transformGithubUrl(url) {
+    // Remove trailing slash if present
+    const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+    
+    // Replace github.com with uithub.com
+    return cleanUrl
+      .replace('github.com', 'uithub.com');
   }
 });

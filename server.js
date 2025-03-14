@@ -1,5 +1,7 @@
-const express = require('express');
-const axios = require('axios');
+import express from 'express';
+import axios from 'axios';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 require('dotenv').config();
 
 const app = express();
@@ -18,7 +20,7 @@ app.post('/api/fetch-content', async (req, res) => {
     if (!url || !url.startsWith('https://uithub.com/')) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Invalid uithub URL provided' 
+        message: 'Invalid Github URL provided' 
       });
     }
     
@@ -52,44 +54,125 @@ app.post('/api/fetch-content', async (req, res) => {
   }
 });
 
-// 1. Install the Groq SDK
-// npm install --save groq-sdk
+// Import Google Generative AI SDK
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// 2. Import and initialize the SDK
-const Groq = require("groq-sdk");
+// Initialize with your API key (from environment variables)
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
 
-// 3. Initialize with your API key (from environment variables)
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const groq = new Groq(GROQ_API_KEY);
-
-// 4. Update your security analysis endpoint
+// Security analysis endpoint using Google Gemini
 app.post('/api/analyze-security', async (req, res) => {
   console.log(`Security analysis payload size: ${JSON.stringify(req.body).length} bytes`);
   
   try {
-    // Use the Groq SDK instead of direct Axios calls
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "system",
-          content: "You are a security expert analyzing code repositories for vulnerabilities."
-        },
-        {
-          role: "user",
-          content: `Please perform a comprehensive security analysis on the following repository code:\n\n${JSON.stringify(req.body.code)}`
-        }
-      ],
-      model: "llama-3.3-70b-versatile", // Or another appropriate model
-      temperature: 0.5,
-      max_completion_tokens: 1024,
-      top_p: 1
+    // Check if content exists in the request body
+    if (!req.body.content) {
+      return res.status(400).json({ 
+        error: "No repository content provided in the request" 
+      });
+    }
+    
+    // Initialize the Gemini model
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.0-flash-lite",
+      generationConfig: {
+        temperature: 0.2,
+        topP: 0.8,
+        topK: 40,
+        maxOutputTokens: 2048,
+      }
     });
     
-    // Extract the response
-    const analysis = chatCompletion.choices[0]?.message?.content || "";
+    // Define security categories to check
+    const securityCategories = [
+      "Command injection prevention",
+      "Context boundary enforcement",
+      "Tool authorization controls",
+      "Parameter validation",
+      "Local privilege escalation checks",
+      "Socket communication security",
+      "Cross-tool request forgery prevention",
+      "Tool response validation",
+      "Command execution sandboxing",
+      "Tool registration verification",
+      "API endpoint security",
+      "MCP server authentication",
+      "JSON deserialization protections",
+      "Command rate limiting",
+      "Network isolation verification",
+      "Localhost-only binding checks",
+      "Tool capability limitations",
+      "Context protocol validation",
+      "Response integrity verification",
+      "File access permission boundaries",
+      "External API call inspection",
+      "Command pattern validation",
+      "Arbitrary code execution prevention",
+      "Service initialization security",
+      "Tool invocation logging"
+    ];
     
-    // Send the response back to the client
-    res.json({ analysis });
+    // Create the prompt for structured output
+    const prompt = `
+    You are a security expert analyzing code repositories for vulnerabilities.
+    
+    Please perform a comprehensive security analysis on the following repository code and provide your results in a structured JSON format.
+    
+    For each of the following security categories, evaluate if the code has proper implementation or vulnerabilities:
+    ${securityCategories.map(category => `- ${category}`).join('\n')}
+    
+    Your response must be a valid JSON object with the following structure:
+    {
+      "summary": "A brief summary of overall security posture",
+      "categories": [
+        {
+          "name": "Category name",
+          "passed": true/false,
+          "description": "Brief explanation of the finding",
+          "severity": "low/medium/high/critical",
+          "recommendation": "How to fix or improve"
+        },
+        ...
+      ]
+    }
+    
+    For each category:
+    - Set "passed" to true if the code properly implements this security measure
+    - Set "passed" to false if the code is vulnerable or missing this security measure
+    - Provide a concise description explaining your finding
+    - Assign an appropriate severity level
+    - Give a specific recommendation for improvement
+    
+    Repository code:
+    ${JSON.stringify(req.body.content)}
+    `;
+    
+    // Generate content using Gemini
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const analysisText = response.text();
+    
+    // Parse the JSON response
+    let analysisJson;
+    try {
+      // Extract JSON if it's wrapped in markdown code blocks
+      const jsonMatch = analysisText.match(/```json\s*([\s\S]*?)\s*```/) || 
+                        analysisText.match(/```\s*([\s\S]*?)\s*```/) ||
+                        [null, analysisText];
+      
+      const jsonString = jsonMatch[1].trim();
+      analysisJson = JSON.parse(jsonString);
+    } catch (error) {
+      console.error("Error parsing JSON response:", error);
+      return res.status(500).json({ 
+        error: "Failed to parse structured analysis results",
+        rawResponse: analysisText
+      });
+    }
+    
+    // Send the structured response back to the client
+    res.json({ analysis: analysisJson });
   } catch (error) {
     console.error("Error during security analysis:", error);
     res.status(500).json({ error: error.message });

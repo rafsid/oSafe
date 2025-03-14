@@ -3,100 +3,114 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GitHub Security Analyzer | OLabs Pro</title>
+  <title>oSafe - Security Analysis Tool</title>
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'UniFont';
+      src: url('https://unifoundry.com/pub/unifont/unifont-14.0.01/font-builds/unifont-14.0.01.woff2') format('woff2'),
+           url('https://unifoundry.com/pub/unifont/unifont-14.0.01/font-builds/unifont-14.0.01.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'UniFont';
+      src: url('https://unifoundry.com/pub/unifont/unifont-14.0.01/font-builds/unifont_upper-14.0.01.woff2') format('woff2'),
+           url('https://unifoundry.com/pub/unifont/unifont-14.0.01/font-builds/unifont_upper-14.0.01.woff') format('woff');
+      font-weight: bold;
+      font-style: normal;
+      font-display: swap;
+    }
+  </style>
 </head>
 <body>
   <div class="app-container">
+    <!-- Header -->
     <header class="glass-header">
       <div class="logo-container">
-        <img src="/assets/logo.svg" alt="OLabs Pro Logo" class="logo">
-        <h1>GitHub Security Analyzer</h1>
+        <img src="https://raw.githubusercontent.com/0xsomnus/osafe-website/main/public/logo.png" alt="oSafe Logo" class="logo">
+        <h1>oSafe Security Analysis</h1>
       </div>
       <nav class="glass-nav">
-        <a href="https://www.olabs.pro/" class="nav-link">Home</a>
-        <a href="#about" class="nav-link">About</a>
-        <a href="#contact" class="nav-link">Contact</a>
+        <a href="https://osafe.xyz" class="nav-link">Home</a>
+        <a href="https://github.com/0xsomnus/osafe" class="nav-link">GitHub</a>
+        <a href="https://twitter.com/0xsomnus" class="nav-link">Twitter</a>
       </nav>
     </header>
 
-    <main>
-      <section class="input-section">
-        <div class="neumorphic-card">
-          <form id="repo-form">
-            <div class="input-container">
-              <span class="input-icon">
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
-                </svg>
-              </span>
-              <input 
-                type="url" 
-                id="repo-url" 
-                class="neumorphic-input"
-                placeholder="Enter GitHub repository URL" 
-                required
-                pattern="https://github.com/[a-zA-Z0-9-_.]+/[a-zA-Z0-9-_.]+(/)?$"
-              >
+    <!-- Input Section -->
+    <section class="input-section">
+      <div class="neumorphic-card">
+        <form id="repoForm">
+          <div class="input-container">
+            <div class="input-icon">
+              <i class="fas fa-link"></i>
             </div>
-            <button type="submit" id="analyze-btn" class="neumorphic-button">
-              Analyze Repository
-            </button>
-          </form>
-        </div>
-      </section>
-
-      <section class="transformed-url-container hidden">
-        <div class="glass-card">
-          <h3>Transformed URL:</h3>
-          <p id="transformed-url" class="url-text"></p>
-        </div>
-      </section>
-
-      <section class="process-section">
-        <div class="glass-card process-card">
-          <div class="process-steps">
-            <div class="step active">
-              <div class="step-icon">1</div>
-              <div class="step-label">Validation</div>
-            </div>
-            <div class="step-connector"></div>
-            <div class="step">
-              <div class="step-icon">2</div>
-              <div class="step-label">Transformation</div>
-            </div>
-            <div class="step-connector"></div>
-            <div class="step">
-              <div class="step-icon">3</div>
-              <div class="step-label">Content Fetching</div>
-            </div>
-            <div class="step-connector"></div>
-            <div class="step">
-              <div class="step-icon">4</div>
-              <div class="step-label">Security Analysis</div>
-            </div>
+            <input 
+              type="text" 
+              id="repoUrl" 
+              class="neumorphic-input" 
+              placeholder="Enter GitHub repository URL (e.g., https://github.com/username/repo)"
+              required
+            >
           </div>
-          
-          <div class="progress-container">
-            <div class="progress-bar" id="progress-bar"></div>
+          <button type="submit" class="neumorphic-button">
+            Analyze Repository
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Process Section -->
+    <section class="process-section hidden" id="processSection">
+      <div class="process-card">
+        <div class="process-steps">
+          <div class="step" id="step1">
+            <div class="step-icon">1</div>
+            <div class="step-label">Fetching</div>
           </div>
-          <div class="progress-text" id="progress-text">Ready to analyze</div>
+          <div class="step-connector"></div>
+          <div class="step" id="step2">
+            <div class="step-icon">2</div>
+            <div class="step-label">Processing</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" id="step3">
+            <div class="step-icon">3</div>
+            <div class="step-label">Analyzing</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" id="step4">
+            <div class="step-icon">4</div>
+            <div class="step-label">Complete</div>
+          </div>
         </div>
-      </section>
-
-      <section class="results-section">
-        <div id="result-container" class="glass-card result-container">
-          <!-- Results will be displayed here -->
+        <div class="progress-container">
+          <div class="progress-bar" id="progressBar"></div>
         </div>
-      </section>
-    </main>
+        <div class="progress-text" id="progressText">Initializing...</div>
+      </div>
+    </section>
 
+    <!-- Results Section -->
+    <section class="results-section hidden" id="resultsSection">
+      <div class="result-container" id="resultContainer">
+        <!-- Results will be inserted here -->
+      </div>
+    </section>
+
+    <!-- Footer -->
     <footer class="glass-footer">
-      <p>&copy; 2025 OLabs Pro. All rights reserved.</p>
+      <div>© 2023 oSafe Security Analysis Tool</div>
       <div class="footer-links">
-        <a href="https://www.olabs.pro/privacy" class="footer-link">Privacy Policy</a>
-        <a href="https://www.olabs.pro/terms" class="footer-link">Terms of Service</a>
+        <a href="https://osafe.xyz" class="footer-link">Home</a>
+        <a href="https://github.com/0xsomnus/osafe" class="footer-link">GitHub</a>
+        <a href="https://twitter.com/0xsomnus" class="footer-link">Twitter</a>
       </div>
     </footer>
   </div>
