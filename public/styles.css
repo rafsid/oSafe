@@ -11,9 +11,10 @@
   --white: #ffffff;
   --yellow: #ffd700;
   --black: #000000;
+  --cream-yellow: #f5f5dc;
   --glow-white: rgba(255, 255, 255, 0.5);
   --foreground: var(--yellow);
-  --background: var(--black);
+  --background: var(--cream-yellow);
   --h1: 5rem;
   --p: 1rem;
   --lp: 1.25em;
@@ -458,6 +459,32 @@ body {
   box-shadow: 
     2px 2px 4px rgba(100, 100, 100, 0.3),
     -2px -2px 4px rgba(100, 100, 100, 0.1);
+}
+
+/* Severity-specific styles */
+.severity-indicator.severity-critical {
+  background-color: #8B0000; /* Blood red for critical */
+  color: white;
+}
+
+.severity-indicator.severity-high {
+  background-color: #FF69B4; /* Pink for high */
+  color: black;
+}
+
+.severity-indicator.severity-medium {
+  background-color: #FFD700; /* Yellow for medium */
+  color: black;
+}
+
+.severity-indicator.severity-low {
+  background-color: #00FF00; /* Green for low */
+  color: black;
+}
+
+.severity-indicator.severity-unknown {
+  background-color: #808080; /* Gray for unknown */
+  color: white;
 }
 
 .check-details {
