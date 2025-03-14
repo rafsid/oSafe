@@ -151,7 +151,7 @@ app.post('/api/analyze-security', async (req, res) => {
           temperature: 0.2,
           topP: 0.8,
           topK: 40,
-          maxOutputTokens: 2048
+          maxOutputTokens: 8192
         }
       });
       
