@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const step3 = document.getElementById('step3');
   const step4 = document.getElementById('step4');
 
+  // Hide progress text initially
+  progressText.textContent = '';
+
   // Event Listeners
   repoForm.addEventListener('submit', handleFormSubmit);
 
@@ -208,7 +211,8 @@ document.addEventListener('DOMContentLoaded', () => {
     processSection.classList.add('hidden');
     resultsSection.classList.add('hidden');
     progressBar.style.width = '0';
-    progressText.textContent = 'Initializing...';
+    // Don't set any text here, it will be set when updateProgress is called
+    progressText.textContent = '';
     resultContainer.innerHTML = '';
     
     // Reset step indicators
