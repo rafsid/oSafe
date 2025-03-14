@@ -75,13 +75,7 @@ app.post('/api/analyze-security', async (req, res) => {
     
     // Initialize the Gemini model
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.0-flash-lite",
-      generationConfig: {
-        temperature: 0.2,
-        topP: 0.8,
-        topK: 40,
-        maxOutputTokens: 2048,
-      }
+      model: "gemini-2.0-flash"
     });
     
     // Define security categories to check
@@ -113,66 +107,105 @@ app.post('/api/analyze-security', async (req, res) => {
       "Tool invocation logging"
     ];
     
-    // Create the prompt for structured output
-    const prompt = `
-    You are a security expert analyzing code repositories for vulnerabilities.
-    
-    Please perform a comprehensive security analysis on the following repository code and provide your results in a structured JSON format.
-    
-    For each of the following security categories, evaluate if the code has proper implementation or vulnerabilities:
-    ${securityCategories.map(category => `- ${category}`).join('\n')}
-    
-    Your response must be a valid JSON object with the following structure:
-    {
-      "summary": "A brief summary of overall security posture",
-      "categories": [
-        {
-          "name": "Category name",
-          "passed": true/false,
-          "description": "Brief explanation of the finding",
-          "severity": "low/medium/high/critical",
-          "recommendation": "How to fix or improve"
-        },
-        ...
-      ]
-    }
-    
-    For each category:
-    - Set "passed" to true if the code properly implements this security measure
-    - Set "passed" to false if the code is vulnerable or missing this security measure
-    - Provide a concise description explaining your finding
-    - Assign an appropriate severity level
-    - Give a specific recommendation for improvement
-    
-    Repository code:
-    ${JSON.stringify(req.body.content)}
-    `;
-    
-    // Generate content using Gemini
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const analysisText = response.text();
-    
-    // Parse the JSON response
-    let analysisJson;
     try {
-      // Extract JSON if it's wrapped in markdown code blocks
-      const jsonMatch = analysisText.match(/```json\s*([\s\S]*?)\s*```/) || 
-                        analysisText.match(/```\s*([\s\S]*?)\s*```/) ||
-                        [null, analysisText];
+      // Create the prompt for structured output
+      const prompt = `
+      You are a security expert analyzing code repositories for vulnerabilities.
       
-      const jsonString = jsonMatch[1].trim();
-      analysisJson = JSON.parse(jsonString);
-    } catch (error) {
-      console.error("Error parsing JSON response:", error);
-      return res.status(500).json({ 
-        error: "Failed to parse structured analysis results",
-        rawResponse: analysisText
+      Please perform a comprehensive security analysis on the following repository code.
+      
+      For each of the following security categories, evaluate if the code has proper implementation or vulnerabilities:
+      ${securityCategories.map(category => `- ${category}`).join('\n')}
+      
+      For each category:
+      - Set "passed" to true if the code properly implements this security measure
+      - Set "passed" to false if the code is vulnerable or missing this security measure
+      - Provide a concise description explaining your finding
+      - Assign an appropriate severity level (low/medium/high/critical)
+      - Give a specific recommendation for improvement
+      
+      Your response MUST be valid JSON with the following structure:
+      {
+        "summary": "A brief summary of overall security posture",
+        "categories": [
+          {
+            "name": "Category name",
+            "passed": true/false,
+            "description": "Brief explanation of the finding",
+            "severity": "low/medium/high/critical",
+            "recommendation": "How to fix or improve"
+          },
+          ...
+        ]
+      }
+      
+      Repository code:
+      ${JSON.stringify(req.body.content)}
+      `;
+      
+      // Generate content using Gemini
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.2,
+          topP: 0.8,
+          topK: 40,
+          maxOutputTokens: 2048
+        }
       });
+      
+      // Get the response
+      const response = await result.response;
+      const analysisText = response.text();
+      
+      console.log("Raw response from Gemini (first 500 chars):", analysisText.substring(0, 500));
+      
+      // Parse the JSON response
+      let analysisJson;
+      try {
+        // Try to extract JSON if it's wrapped in markdown code blocks
+        const jsonMatch = analysisText.match(/```json\s*([\s\S]*?)\s*```/) || 
+                          analysisText.match(/```\s*([\s\S]*?)\s*```/);
+        
+        if (jsonMatch && jsonMatch[1]) {
+          // If JSON is in code blocks, extract it
+          const jsonString = jsonMatch[1].trim();
+          console.log("Extracted JSON from code blocks (first 200 chars):", jsonString.substring(0, 200));
+          analysisJson = JSON.parse(jsonString);
+        } else {
+          // Otherwise try to parse the raw text as JSON
+          console.log("Attempting to parse raw text as JSON");
+          analysisJson = JSON.parse(analysisText);
+        }
+        
+        // Validate that the parsed JSON has the expected structure
+        if (!analysisJson.summary || !Array.isArray(analysisJson.categories)) {
+          console.log("JSON structure validation failed:", JSON.stringify(analysisJson).substring(0, 200));
+          throw new Error("Response does not match expected schema");
+        }
+        
+      } catch (error) {
+        console.error("Error parsing JSON response:", error);
+        
+        // Fallback: Create a structured response manually
+        analysisJson = {
+          summary: "Failed to parse the security analysis results. The analysis was performed but the results could not be structured properly.",
+          categories: securityCategories.map(category => ({
+            name: category,
+            passed: false,
+            description: "Could not analyze this category due to parsing error.",
+            severity: "medium",
+            recommendation: "Please try again or contact support if the issue persists."
+          }))
+        };
+      }
+      
+      // Send the structured response back to the client
+      res.json({ analysis: analysisJson });
+    } catch (error) {
+      console.error("Error during security analysis:", error);
+      res.status(500).json({ error: error.message });
     }
-    
-    // Send the structured response back to the client
-    res.json({ analysis: analysisJson });
   } catch (error) {
     console.error("Error during security analysis:", error);
     res.status(500).json({ error: error.message });

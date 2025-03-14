@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
         checkDetails.className = 'check-details';
         checkDetails.innerHTML = `
           <div class="description">${category.description}</div>
-          <div class="recommendation">${category.recommendation || category.recommendations}</div>
+          <div class="recommendation">${category.recommendation}</div>
         `;
         
         // Add elements to check item
